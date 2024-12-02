@@ -1,0 +1,25 @@
+# Blender MTL File: 'untitled.blend'
+# Material Count: 2
+
+newmtl Material.002
+Ns 96.078431
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd lancelot_skin02_high_face_d.png
+
+newmtl lancelot_skin02_high_d1
+Ns 19.607843
+Ka 0.501900 0.501900 0.501900
+Kd 0.501900 0.501900 0.501900
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd lancelot_skin02_high_d1.png
+map_Ka lancelot_skin02_high_d1.png
