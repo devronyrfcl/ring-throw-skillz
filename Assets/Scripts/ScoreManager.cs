@@ -10,6 +10,8 @@ public class ScoreManager : MonoBehaviour
     {
         // Ensure that the score is displayed at the start
         UpdateScoreDisplay();
+
+        AudioManager.Instance.PlayMusic("Background_2");
     }
 
     // Method to increase the score by a given amount

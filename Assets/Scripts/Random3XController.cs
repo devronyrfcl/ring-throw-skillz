@@ -21,22 +21,25 @@ public class Random3XController : MonoBehaviour
     {
         while (true)
         {
-            // Pick a random TargetManager from the array to control its 3X object
-            TargetManager selectedTargetManager = targetManagers[Random.Range(0, targetManagers.Length)];
+            // Pick a random TargetManager from the array using Skillz RNG
+            int randomIndex = SkillzCrossPlatform.Random.Range(0, targetManagers.Length);
+            TargetManager selectedTargetManager = targetManagers[randomIndex];
 
             // Randomly activate the 3X object
             selectedTargetManager.is3XActive = true;
             selectedTargetManager.threeXObject.SetActive(true);
 
-            // Wait for a random time before deactivating it
-            yield return new WaitForSeconds(Random.Range(minActivationTime, maxActivationTime));
+            // Wait for a random time before deactivating it, using Skillz RNG
+            float activationTime = SkillzCrossPlatform.Random.Range(minActivationTime, maxActivationTime);
+            yield return new WaitForSeconds(activationTime);
 
             // Deactivate the 3X object
             selectedTargetManager.is3XActive = false;
             selectedTargetManager.threeXObject.SetActive(false);
 
-            // Wait for a random time before activating it again
-            yield return new WaitForSeconds(Random.Range(minDeactivationTime, maxDeactivationTime));
+            // Wait for a random time before activating it again, using Skillz RNG
+            float deactivationTime = SkillzCrossPlatform.Random.Range(minDeactivationTime, maxDeactivationTime);
+            yield return new WaitForSeconds(deactivationTime);
         }
     }
 

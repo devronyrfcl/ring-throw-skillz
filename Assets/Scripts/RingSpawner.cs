@@ -2,20 +2,19 @@ using UnityEngine;
 using UnityEngine.SceneManagement; // For scene management
 using UnityEngine.Events; // For UnityEvent
 using TMPro; // For TextMeshPro
+using UnityEngine.UI; // For Slider
 using System.Collections; // For IEnumerator
+using SkillzSDK; // For Skillz API
 
 public class RingSpawner : MonoBehaviour
 {
     public GameObject ringPrefab; // Assign your ring prefab here
     public Transform spawnPoint; // Where to spawn the ring
-    public Transform ringHolder; // Parent object for holding the rings
     public float spawnDelay = 3f; // Delay before spawning a new ring (in seconds)
     public int maxRings = 6; // Max number of rings allowed
-    public float ringSpacing = 0.5f; // Space between held rings (controlled via Inspector)
     public float transitionDuration = 1f; // Duration for moving the ring from holder to spawnPoint
-
+    
     private int ringCount = 0; // To track the number of rings thrown
-    private GameObject[] heldRings; // Array to store held rings
 
     public UnityEvent OnGameOver; // UnityEvent that will be triggered when the game is over
 
@@ -27,6 +26,7 @@ public class RingSpawner : MonoBehaviour
 
     private float timer = 40.0f; // Initial timer value (40 seconds)
     private bool gameOverTriggered = false;
+    private int finalScore; // Store the final score
 
     private void OnEnable()
     {
@@ -40,27 +40,8 @@ public class RingSpawner : MonoBehaviour
 
     private void Start()
     {
-        InitializeHolder();
         SpawnNewRing(); // Ensure that a ring is spawned initially
         StartCoroutine(TimerCountdown()); // Start the timer countdown
-    }
-
-    private void InitializeHolder()
-    {
-        heldRings = new GameObject[maxRings];
-        for (int i = 0; i < maxRings; i++)
-        {
-            Vector3 position = ringHolder.position + new Vector3(i * ringSpacing, 0, 0);
-            heldRings[i] = Instantiate(ringPrefab, position, Quaternion.identity, ringHolder);
-
-            Rigidbody rb = heldRings[i].GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = true;
-            }
-
-            heldRings[i].transform.rotation = ringHolder.rotation;
-        }
     }
 
     private void StartSpawnTimer()
@@ -79,23 +60,24 @@ public class RingSpawner : MonoBehaviour
     {
         if (ringCount >= maxRings) return;
 
-        GameObject nextRing = heldRings[ringCount];
-        nextRing.transform.SetParent(null);
-
-        LeanTween.move(nextRing, spawnPoint.position, transitionDuration)
-            .setEase(LeanTweenType.easeInOutSine)
-            .setOnStart(() =>
-            {
-                LeanTween.rotate(nextRing, Vector3.zero, transitionDuration).setEase(LeanTweenType.easeInOutSine);
-            });
-
-        Rigidbody rb = nextRing.GetComponent<Rigidbody>();
+        // Spawn a new ring at the spawn point
+        GameObject newRing = Instantiate(ringPrefab, spawnPoint.position, Quaternion.identity);
+        
+        // Optional: If you want the ring to be thrown with an initial force or any other specific behavior, you can set that here
+        Rigidbody rb = newRing.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = false;
         }
 
-        nextRing.SetActive(true);
+        // Move the ring to the spawn point with a transition animation
+        LeanTween.move(newRing, spawnPoint.position, transitionDuration)
+            .setEase(LeanTweenType.easeInOutSine)
+            .setOnStart(() =>
+            {
+                LeanTween.rotate(newRing, Vector3.zero, transitionDuration).setEase(LeanTweenType.easeInOutSine);
+            });
+
         ringCount++;
     }
 
@@ -124,12 +106,14 @@ public class RingSpawner : MonoBehaviour
         timeLeftText.text = "" + timeLeft.ToString() + "s";
 
         // Calculate the final score
-        int finalScore = Mathf.RoundToInt(scoreManager.score * timeLeft);
+        finalScore = Mathf.RoundToInt(scoreManager.score * timeLeft);
 
         // Display the final score
         finalScoreText.text = finalScore.ToString();
 
-        yield return new WaitForSeconds(4.0f); // Wait for 3.5 seconds
+        yield return new WaitForSeconds(4.0f); // Wait for 4 seconds
+
+        //SubmitFinalScoreToSkillz(); // Submit the final score to Skillz
 
         OnGameOver?.Invoke(); // Trigger game over
     }
@@ -137,5 +121,38 @@ public class RingSpawner : MonoBehaviour
     public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    // Public method to get the final score
+    public int GetFinalScore()
+    {
+        return finalScore; // Return the final score
+    }
+
+    // Public method to submit the final score to Skillz
+    public void SubmitFinalScoreToSkillz()
+    {
+        Debug.Log("Submitting score to Skillz: " + finalScore);
+        SubmitScore(finalScore); // Submit the score
+    }
+
+    // Private method to submit the score to Skillz
+    private void SubmitScore(int score)
+    {
+        SkillzCrossPlatform.SubmitScore(score, OnScoreSubmittedSuccessfully, OnScoreSubmissionFailed);
+    }
+
+    // Callback when the score is successfully submitted
+    private void OnScoreSubmittedSuccessfully()
+    {
+        Debug.Log("Score submission successful!");
+        SkillzCrossPlatform.ReturnToSkillz(); // Return to Skillz after score submission
+    }
+
+    // Callback when the score submission fails
+    private void OnScoreSubmissionFailed(string reason)
+    {
+        Debug.LogWarning("Score submission failed: " + reason);
+        SkillzCrossPlatform.DisplayTournamentResultsWithScore(finalScore); // Display results with the score
     }
 }
